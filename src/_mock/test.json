@@ -1,0 +1,43 @@
+{
+    "managerEmail": "nishan.goswami@test.com",
+    "resoures": [
+        {
+            "email": "pramod.kumar@test.com",
+            "projects": [
+                {
+                    "name": "T&M",
+                    "hours": 8.0,
+                    "date": "2022-08-08",
+                    "status": 1,
+                    "comment": ""
+                },
+                {
+                    "name": "Bulmatic",
+                    "hours": 8.0,
+                    "date": "2022-08-09",
+                    "status": 1,
+                    "comment": ""
+                }
+            ]
+        },
+        {
+            "email": "dhirender.singh@test.com",
+            "projects": [
+                {
+                    "name": "Bulmatic",
+                    "hours": 8.0,
+                    "date": "2022-08-08",
+                    "status": 1,
+                    "comment": ""
+                },
+                {
+                    "name": "T&M",
+                    "hours": 8.0,
+                    "date": "2022-08-09",
+                    "status": 1,
+                    "comment": ""
+                }
+            ]
+        }
+    ]
+}

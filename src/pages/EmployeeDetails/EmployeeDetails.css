@@ -1,0 +1,237 @@
+/* EmployeeDetails.css */
+.breadcrumb {
+  display: flex;
+  align-items: center; /* Vertically center the icon and text */
+  font-size: 1.5em; /* Adjust font size for the breadcrumb */
+  color: #000000; /* Set breadcrumb text color */
+}
+
+.breadcrumb .breadcrumb-text {
+  margin: 0; /* Remove default margin */
+  font-size: 2em;
+  color: #000000; /* Same color as the breadcrumb icon */
+  font-weight: 500; /* Adjust the weight to make it slightly bold */
+}
+
+.breadcrumb .breadcrumb-divider{
+  margin: 0 10px 0 10px; /* Space between items in the breadcrumb */
+  font-size: 2.5em;
+  color: #000000; /* Same color as the breadcrumb icon */
+  font-weight: 500; /* Adjust the weight to make it slightly bold */
+}
+
+.breadcrumb .breadcrumb-text:hover {
+  text-decoration: underline; /* Add underline effect on hover */
+  color: #000000; /* Slightly darker blue on hover for a visual feedback */
+}
+
+.breadcrumb .breadcrumb-text, .breadcrumb .icon {
+  cursor: pointer; /* Change cursor to pointer to show it's clickable */
+  display: flex;
+  align-items: center;
+  transition: color 0.2s ease; /* Smooth color transition on hover */
+}
+
+.breadcrumb .icon {
+  color: #000000; /* Set the same blue color for the icon */
+  margin-right: 10px; /* Spacing between icon and text */
+  transition: color 0.2s ease; /* Smooth color transition on hover */
+}
+
+.breadcrumb .icon:hover {
+  color: #000000; /* Change icon color slightly on hover */
+}
+.breadcrumb-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: end;
+  gap: 10px; /* Space between the two buttons */
+}
+.breadcrumb-save button, .breadcrumb-discard button {
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+}
+.middle-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: stretch; /* Align to the top */
+  margin-top: 2%; /* Add some space at the top */
+  width: 100%;
+}
+
+.employee-card {
+  flex: 0 0 55%;
+  
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  background-color: #f9f9f9;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  font-family: 'Arial', sans-serif;
+}
+.employee-card, .allocation-chart {
+  background-color: #f9f9f9;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  flex: 1; /* Make both sections take up equal space */
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+  position: relative; /* This allows absolute positioning of child elements */
+}
+
+.info.icon {
+  position: absolute; /* Set absolute positioning */
+  top: 10px; /* Adjust the value based on desired vertical alignment */
+  right: 10px; /* Adjust the value based on desired horizontal alignment */
+  cursor: pointer; /* Show pointer to indicate it's clickable */
+  font-size: 1.5em; /* Adjust size if needed */
+  border-radius: 10%; /* Make the icon circular */
+}
+
+
+.profile-img {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  margin-right: 20px;
+}
+
+.employee-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.employee-info h2 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.employee-id {
+  font-size: 14px;
+  color: #6c757d;
+}
+
+/* Flexbox to align top-info and contact-info */
+.top-info {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  justify-content: space-between;
+  align-items: center;
+  
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  flex: 1; /* Allow the items to flex and take equal space */
+  padding: 10px;
+}
+
+.info-item div {
+  margin-left: 10px;
+}
+
+.info-item p {
+  margin: 0;
+  font-size: 14px;
+}
+
+.employee-role h3, .info-item h3 {
+  margin-bottom: 5px;
+  font-size: 16px;
+}
+
+.employee-role p, .info-item p {
+  font-size: 14px;
+}
+
+/* Ensure the icons and text align properly */
+.info-item Icon {
+  margin-right: 10px;
+}
+
+.contact-info {
+  margin-top: 20px;
+}
+
+.button-section {
+  padding: 2% 0;
+  display: flex;
+  justify-content: space-between; /* Space between buttons */
+  margin-top: 20px;
+}
+
+.button-section .ui.button {
+  width: 48%; /* Make the buttons take equal width */
+}
+
+
+
+.allocation-chart {
+  flex: 0 0 40%; /* Fixed to take 38% of the width with some gap */
+  margin-left: 2%; /* Add space between employee-card and allocation-chart */
+  background-color: #00000000;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  font-family: 'Arial', sans-serif;
+}
+
+.bottom-content{
+  margin-top: 2%;
+}
+  /* Scrollable table container */
+.table-container {
+  overflow-x: auto;
+}
+
+.table-container .ui.table {
+  width: 1800px; /* Adjust based on the number of columns */
+}
+
+/* Style the table headers to indicate they are sortable */
+.ui.table th {
+  cursor: pointer;
+}
+  .table {
+    width: 100%; /* Take full width */
+    table-layout: fixed; /* Fixed layout for better control */
+    border-collapse: collapse; /* Collapse borders for a cleaner look */
+  }
+  
+  .table th, .table td {
+    padding: 8px 10px; /* Reduced padding */
+    text-align: left; /* Left-align text */
+    white-space: normal; /* Allow text to wrap */
+    overflow: hidden; /* Hide overflow */
+    text-overflow: ellipsis; /* Add ellipsis if the content overflows */
+    font-size: 0.9em; /* Slightly smaller font size */
+  }
+  
+  .table th {
+    background-color: #f5f8fa; /* Light background for the header */
+    font-weight: bold;
+  }
+  
+  .table td {
+    background-color: #fff; /* White background for table rows */
+    color: #333; /* Darker text color for contrast */
+  }
+  
+  .table tr:nth-child(even) {
+    background-color: #f9f9f9; /* Light grey background for alternating rows */
+  }
+  
+  .table tr:hover {
+    background-color: #e9ecef; /* Highlight row on hover */
+  }
+  
+  

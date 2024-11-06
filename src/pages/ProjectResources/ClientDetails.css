@@ -1,0 +1,79 @@
+/* src/pages/ClientDetails.css */
+
+ /* Scrollable table container */
+ .table-container {
+  overflow-x: auto;
+}
+
+.table-container .ui.table {
+  min-width: 1800px; /* Adjust based on the number of columns */
+}
+
+/* Style the table headers to indicate they are sortable */
+.ui.table th {
+  cursor: pointer;
+}
+  .table {
+    width: 100%; /* Take full width */
+    table-layout: fixed; /* Fixed layout for better control */
+    border-collapse: collapse; /* Collapse borders for a cleaner look */
+  }
+  
+  .table th, .table td {
+    padding: 8px 10px; /* Reduced padding */
+    text-align: left; /* Left-align text */
+    white-space: normal; /* Allow text to wrap */
+    overflow: hidden; /* Hide overflow */
+    text-overflow: ellipsis; /* Add ellipsis if the content overflows */
+    font-size: 0.9em; /* Slightly smaller font size */
+  }
+  
+  .table th {
+    background-color: #f5f8fa; /* Light background for the header */
+    font-weight: bold;
+  }
+  
+  .table td {
+    background-color: #fff; /* White background for table rows */
+    color: #333; /* Darker text color for contrast */
+  }
+  
+  .table tr:nth-child(even) {
+    background-color: #f9f9f9; /* Light grey background for alternating rows */
+  }
+  
+  .table tr:hover {
+    background-color: #e9ecef; /* Highlight row on hover */
+  }
+  
+  /* Pagination Styles */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px;
+}
+
+.pagination button {
+  background-color: #f5f5f5;
+  border: none;
+  padding: 10px 20px;
+  margin: 5px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.3s ease;
+}
+
+.pagination button:hover {
+  background-color: #e5e5e5;
+}
+
+.pagination button.active {
+  background-color: #4a90e2;
+  color: white;
+}
+
+.pagination button:disabled {
+  background-color: #d3d3d3;
+  cursor: not-allowed;
+}

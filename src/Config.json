@@ -1,0 +1,49 @@
+{
+  "environment": "dev",
+  "active_directory_env": "local",
+  "sessionStorageKeys": {
+    "profileData": "profileData",
+    "accessToken": "accesstoken"
+  },
+  "apiPaths": {
+    "getUserRole": "/api/getUserRole/"
+  },
+  "defaultRole": "MANAGER",
+  "roleMapping": {
+    "LEADER": "LEADER",
+    "BIZOPS": "BIZOPS",
+    "MANAGER": "MANAGER",
+    "EMPLOYEE": "EMPLOYEE"
+  },
+  "displayName": "Sathiamurthi",
+  "userPrincipalName": "dnmsathia@gmail.com",
+  "azureApiUrl": "http://localhost:7071",
+  "REACT_APP_ROWSPERPAGE": 15,
+  "REACT_APP_API_DATA_CHUNKS": 10,
+  "REACT_APP_DELAY_API_CALL": 10000,
+  "max_total_hours": 8,
+  "max_project_hours": 9,
+  "local": {
+    "dynamoDB_Prefix": "local",
+    "apiUrl": "https://dev-innover-rms.azurewebsites.net",
+    "key": "allmydonutsareonfire"
+  },
+  "dev": {
+    "dynamoDB_Prefix": "dev_",
+    "apiUrl": "https://54eqkqnicc.execute-api.us-east-2.amazonaws.com/dev",
+    "key": "allmydonutsareonfire"
+  },
+  "qa": {
+    "dynamoDB_Prefix": "qa_",
+    "apiUrl": "https://4j1pvhmuai.execute-api.us-east-2.amazonaws.com/qa/",
+    "key": "toBeDecided"
+  },
+  "live": {
+    "dynamoDB_Prefix": "acc",
+    "apiUrl": "https://innovertimesheet.azurewebsites.net",
+    "key": "toBeDecided"
+  },
+  "adminUsers": [
+    "rstrauss@bulkmatictransport.com"
+  ]
+}

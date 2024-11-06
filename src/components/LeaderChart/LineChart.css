@@ -1,0 +1,95 @@
+/* src/components/LineChart/LineChart.css */
+.line-chart-container {
+  width: 100%;
+  padding: 20px;
+  background: #f9f9f9;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+h2 {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.filter-tabs {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.filter-tabs .ui.button {
+  min-width: 100px; /* Consistent button width */
+}
+
+.custom-date-picker {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.custom-date-picker .ui.input {
+  flex: none;
+}
+
+.chart-section {
+  flex: 1;
+  min-width: 300px;
+  height: 400px;
+}
+
+.charts-container {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.line-chart {
+  flex: 3; /* 60% */
+}
+
+.donut-chart {
+  flex: 2; /* 40% */
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .charts-container {
+    flex-direction: column;
+  }
+
+  .line-chart,
+  .donut-chart {
+    flex: none;
+    width: 100%;
+    height: 400px;
+  }
+
+  .filter-tabs {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .custom-date-picker {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .custom-date-picker .ui.input {
+    width: 150px;
+  }
+}
+
+/* Custom styles for the project status */
+.label.green {
+  background-color: #21ba45 !important; /* Completed */
+}
+.label.blue {
+  background-color: #2185d0 !important; /* In Progress */
+}
+.label.yellow {
+  background-color: #fbbd08 !important; /* On Hold */
+}

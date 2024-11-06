@@ -1,0 +1,25 @@
+{
+    "managerEmail": "pramod.kumar@test.com",
+    "project": "Resource Post API",
+    "id": "J00062",
+    "resource": [
+        {
+            "resourceEmail": "pramod.kumar@test.com",
+            "status": 0,
+            "date": "2023-09-04",
+            "hour": 4.0
+        },
+        {
+            "resourceEmail": "pramod.kumar@test.com",
+            "status": 0,
+            "date": "2023-09-05",
+            "hour": 8.0
+        },
+        {
+            "resourceEmail": "pramod.kumar@test.com",
+            "status": 0,
+            "date": "2023-09-07",
+            "hour": 8.0
+        }
+    ]
+}

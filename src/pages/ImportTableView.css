@@ -1,0 +1,59 @@
+/* Base styles */
+table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  th, td {
+    text-align: left;
+    padding: 8px;
+  }
+  
+  /* Responsive styles */
+  @media (max-width: 768px) {
+    /* For tablets and below */
+    table, thead, tbody, th, td, tr {
+      display: block;
+    }
+  
+    thead tr {
+      position: absolute;
+      top: -9999px;
+      left: -9999px;
+    }
+  
+    tr { border: 1px solid #ccc; }
+  
+    td {
+      /* Each cell is now a row */
+      border: none;
+      border-bottom: 1px solid #eee;
+      position: relative;
+      padding-left: 50%;
+    }
+  
+    td:before {
+      /* Adding a pseudo-element for the label */
+      position: absolute;
+      top: 6px;
+      left: 6px;
+      width: 45%;
+      padding-right: 10px;
+      white-space: nowrap;
+      /* Label the data */
+      content: attr(data-label);
+      font-weight: bold;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    /* For phones and smaller devices */
+    td:before {
+      /* Adjustments for smaller screens */
+      top: 0;
+      left: 0;
+      width: 100%;
+      padding: 10px 0; /* Increase padding for better readability */
+      text-align: left;
+    }
+  }

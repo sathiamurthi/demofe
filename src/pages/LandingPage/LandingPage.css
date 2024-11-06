@@ -1,0 +1,78 @@
+/* Container for the entire landing page */
+.landing-container {
+    text-align: center;
+    padding: 20px;
+  }
+  
+  /* Container for the cards using CSS Grid */
+  .cards-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); /* Responsive grid layout */
+    gap: 20px; /* Spacing between the cards */
+    padding: 20px;
+  }
+  
+  /* Styling for each card */
+  .card {
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    width: 100%; /* Full width within the grid cell */
+    padding: 30px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    text-align: left;
+    transition: transform 0.3s ease; /* Smooth scale on hover */
+  }
+  
+  .card:hover {
+    transform: scale(1.02); /* Slight scaling effect on hover */
+  }
+  
+  /* Card header styles */
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 15px; /* Add spacing below the header */
+  }
+  
+  .icon {
+    font-size: 2em;
+    color: #000;
+  }
+  
+  /* Styling for headings inside the cards */
+  .card h3 {
+    margin: 0;
+    padding: 0;
+    font-size: 1.5em;
+  }
+  
+  /* Subtitle styling */
+  .subtitle {
+    font-size: 1em;
+    color: #888;
+  }
+  
+  /* Styling for the paragraph inside the cards */
+  .card p {
+    font-size: 1em;
+    color: #666;
+  }
+  
+  /* Styling for the buttons inside the cards */
+  .button {
+    background-color: #000;
+    color: #fff;
+    border: none;
+    padding: 12px 20px;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background 0.3s ease;
+    margin-top: 15px; /* Spacing above the button */
+  }
+  
+  .button:hover {
+    background-color: #444;
+  }
+  

@@ -1,0 +1,125 @@
+{
+    "email": "nishan.goswami@test.com",
+    "projects": [
+        {
+            "name": "T&M",
+            "hours": 2,
+            "date": "2023-05-15",
+            "status": 1,
+            "comment": "",
+            "assigned": [
+                {
+                    "email": "pramod.kumar@test.com",
+                    "hours": 10,
+                    "date": "2023-05-15",
+                    "status": 1,
+                    "comment": ""
+                },
+                {
+                    "email": "nishan.goswami@test.com",
+                    "hours": 12,
+                    "date": "2023-05-15",
+                    "status": 1,
+                    "comment": ""
+                },
+                {
+                    "email": "panchakshari.bm@test.com",
+                    "hours": 8,
+                    "date": "2023-05-15",
+                    "status": 1,
+                    "comment": ""
+                }
+            ]
+        },
+        {
+            "name": "DemoInHouse",
+            "hours": 2,
+            "date": "2023-05-16",
+            "status": 1,
+            "comment": "",
+            "assigned": [
+                {
+                    "email": "nishan.goswami@test.com",
+                    "hours": 6,
+                    "date": "2023-05-16",
+                    "status": 1,
+                    "comment": ""
+                },
+                {
+                    "email": "nurul.ansar@test.com",
+                    "hours": 22,
+                    "date": "2023-05-16",
+                    "status": 1,
+                    "comment": ""
+                },
+                {
+                    "email": "manoj@gmail.com",
+                    "hours": 32,
+                    "date": "2023-05-16",
+                    "status": 1,
+                    "comment": ""
+                }
+            ]
+        },
+        {
+            "name": "ABC",
+            "hours": 2,
+            "date": "2023-05-16",
+            "status": 0,
+            "comment": "",
+            "assigned": [
+                {
+                    "email": "pramod@gmail.com",
+                    "hours": 12,
+                    "date": "2023-05-16",
+                    "status": 1,
+                    "comment": ""
+                },
+                {
+                    "email": "rajesh@gmail.com",
+                    "hours": 22,
+                    "date": "2023-05-16",
+                    "status": 1,
+                    "comment": ""
+                },
+                {
+                    "email": "manoj@gmail.com",
+                    "hours": 32,
+                    "date": "2023-05-16",
+                    "status": 1,
+                    "comment": ""
+                }
+            ]
+        },
+        {
+            "name": "For June 2022",
+            "hours": 2,
+            "date": "2023-05-18",
+            "status": 0,
+            "comment": "",
+            "assigned": [
+                {
+                    "email": "pramod@gmail.com",
+                    "hours": 2,
+                    "date": "2023-05-18",
+                    "status": 1,
+                    "comment": ""
+                },
+                {
+                    "email": "rajesh@gmail.com",
+                    "hours": 2,
+                    "date": "2023-05-18",
+                    "status": 1,
+                    "comment": ""
+                },
+                {
+                    "email": "manoj@gmail.com",
+                    "hours": 2,
+                    "date": "2023-05-18",
+                    "status": 1,
+                    "comment": ""
+                }
+            ]
+        }
+    ]
+}

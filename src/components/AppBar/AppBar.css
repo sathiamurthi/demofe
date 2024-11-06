@@ -1,0 +1,21 @@
+
+  
+  /* Logo container adjustments */
+  .logo-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px 0 30px; /* Add padding on top, left-right, and extra on the bottom */
+  }
+  
+  .navbar-logo {
+    width: 100%;
+    height: auto;
+    max-height: 60px; /* Adjust based on your design preference */
+    aspect-ratio: 4 / 1; /* Ensures the 4:1 ratio is maintained */
+    object-fit: contain; /* Ensures the logo scales correctly within its container */
+    border-radius: 10px;
+    padding-bottom: 10px; /* Optional */
+  }
+  
+  
