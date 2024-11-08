@@ -1,3 +1,4 @@
+// src/components/ResponsiveAppBar.js
 import React, { useState, useEffect, useContext } from "react";
 import { useMsal } from "@azure/msal-react";
 import axios from "axios";
@@ -15,61 +16,81 @@ import {
   MenuItem,
   Divider,
   LinearProgress,
+  CssBaseline,
+  Button,
+  ButtonGroup,
   Drawer,
   List,
   ListItem,
+  ListItemButton,
   ListItemText,
-  CssBaseline,
-  Tabs,
-  Tab,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  TextField,
-  Button
+  Collapse,
+  styled,
 } from "@mui/material";
-import MenuIcon from "@mui/icons-material/Menu";
-import { styled } from "@mui/system";
-import { NavLink, Outlet, useLocation } from "react-router-dom"; // Import necessary components
-import { menuConfig } from "../../constants/menuConfig"; // Import the menu configuration
+import MenuIcon from '@mui/icons-material/Menu';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import ExpandLess from '@mui/icons-material/ExpandLess';
+import ExpandMore from '@mui/icons-material/ExpandMore';
+import { NavLink, Outlet, useLocation } from "react-router-dom";
+import { menuConfig } from "../../constants/menuConfig";
 import logo from "../../assets/images/logo.png";
 import { ROLES } from "../../constants/roles";
 import { UserContext } from "../../context/UserContext";
-
 import "./AppBar.css";
 
-const drawerWidth = 240;
+// Styled Components
 
-// Styled components for consistent theming and cleaner CSS
-const MainContent = styled(Box)(({ theme, open }) => ({
+const MainContent = styled(Box)(({ theme }) => ({
   flexGrow: 1,
   padding: theme.spacing(3),
-  transition: theme.transitions.create("margin", {
-    easing: theme.transitions.easing.sharp,
-    duration: theme.transitions.duration.leavingScreen,
-  }),
-  marginLeft: open ? drawerWidth : 0,
   marginTop: "64px",
 }));
+
+const StyledMenu = styled(Menu)(({ theme }) => ({
+  '& .MuiPaper-root': {
+    borderRadius: 6,
+    marginTop: theme.spacing(1),
+    minWidth: 180,
+    boxShadow:
+      'rgb(255, 255, 255) 0px 0px 0px 0px, ' +
+      'rgba(0, 0, 0, 0.05) 0px 0px 0px 1px, ' +
+      'rgba(0, 0, 0, 0.1) 0px 10px 15px -3px, ' +
+      'rgba(0, 0, 0, 0.05) 0px 4px 6px -2px',
+    '& .MuiMenu-list': {
+      padding: '4px 0',
+    },
+    '& .MuiMenuItem-root': {
+      fontSize: 14,
+      padding: '10px 16px',
+      backgroundColor: 'white',
+      color: 'black',
+      '&:hover': {
+        backgroundColor: 'black',
+        color: 'white',
+      },
+      '&.active': {
+        backgroundColor: 'white',
+        color: 'black',
+      },
+    },
+  },
+}));
+
+const drawerWidth = 240;
 
 export default function ResponsiveAppBar() {
   const [anchorElUser, setAnchorElUser] = useState(null);
   const [profiledata, setProfiledata] = useState({});
   const [imageUrl, setImageUrl] = useState(null);
   const [loader, setLoader] = useState(true);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [openDialog, setOpenDialog] = useState(false);
-  const [updatedProfile, setUpdatedProfile] = useState({
-    displayName: "",
-    userPrincipalName: "",
-    role: "",
-  });
+  const [menuAnchors, setMenuAnchors] = useState({});
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [openSubMenus, setOpenSubMenus] = useState({});
+
   const { instance } = useMsal();
   const theme = useTheme();
-
-  // Access userRole from UserContext
   const { userRole } = useContext(UserContext);
+  const location = useLocation();
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -90,33 +111,33 @@ export default function ResponsiveAppBar() {
         setLoader(false);
       } catch (error) {
         console.error(error);
-        setLoader(false); // Stop loader even if there's an error
+        setLoader(false);
       }
     };
     fetchProfile();
   }, []);
 
-  useEffect(() => {
-    // Set updatedProfile only when profiledata and userRole are available
-    if (profiledata && userRole) {
-      setUpdatedProfile({
-        displayName: profiledata.displayName || "",
-        userPrincipalName: profiledata.userPrincipalName || "",
-        role: userRole || "",
-      });
-    }
-  }, [profiledata, userRole]); // Update whenever profiledata or userRole changes
-
   const handleOpenUserMenu = (event) => setAnchorElUser(event.currentTarget);
   const handleCloseUserMenu = () => setAnchorElUser(null);
 
-  const handleToggleSidebar = () => setSidebarOpen(!sidebarOpen);
+  const handleOpenMenu = (event, menuId) => {
+    setMenuAnchors((prev) => ({
+      ...prev,
+      [menuId]: event.currentTarget,
+    }));
+  };
+
+  const handleCloseMenu = (menuId) => {
+    setMenuAnchors((prev) => ({
+      ...prev,
+      [menuId]: null,
+    }));
+  };
 
   const handleLogout = () => {
     instance.logoutRedirect({ postLogoutRedirectUri: "/" });
   };
 
-  // Function to get display name for the role
   const getRoleDisplayName = (roleKey) => {
     switch (roleKey) {
       case ROLES.LEADER:
@@ -127,129 +148,340 @@ export default function ResponsiveAppBar() {
         return "Project Manager";
       case ROLES.EMPLOYEE:
         return "Employee";
+      case ROLES.ADMIN:
+        return "Administrator";
       default:
         return "User";
     }
   };
 
-  // Get current path to determine active tab and sidebar items
-  const location = useLocation();
-  const currentPath = location.pathname;
-
-  // Find the main menu item that matches the current path
-  const currentMainMenu = menuConfig.find(
-    (menu) =>
-      currentPath === menu.path ||
-      currentPath.startsWith(`${menu.path}/`)
-  );
-
-  // Instead of finding index, use the path as the value
-  const currentTabValue = currentMainMenu ? currentMainMenu.path : false;
-
-  // Filter menuConfig based on userRole
   const filteredMenuConfig = menuConfig.filter((menu) =>
     menu.allowedRoles.includes(userRole)
   );
 
-  // Handle opening and closing of the dialog
-  const handleOpenDialog = () => {
-    setOpenDialog(true);  // Open the dialog when "Edit Profile" is clicked
+  const currentPath = location.pathname;
+
+  // Helper function to determine if a menu or any of its sub-items is active
+  const isMenuActive = (menu) => {
+    if (currentPath === menu.path) return true;
+
+    // Trails 
+    if (menu.key === 'allocations') {  // Assuming 'allocations' is the key for your Allocations menu
+      const allocationRelatedPaths = [
+        /^\/employee\/[A-Z]{3}\d+$/,  // Matches paths like /employee/INN005
+        /^\/client\/\d+\/projects$/,  // Matches paths like /client/1/projects
+        /^\/client\/\d+\/project\/[A-Z]{3}\d+$/  // Matches paths like /client/1/project/PJT009
+      ];
+
+      // Check if current path matches any of the allocation-related patterns
+      if (allocationRelatedPaths.some(pattern => pattern.test(currentPath))) {
+        return true;
+      }
+    }
+
+    // Check subItems if they exist
+    if (menu.subItems && menu.subItems.length > 0) {
+      return menu.subItems.some(subItem => {
+        // Direct subItem path match
+        if (currentPath === subItem.path) return true;
+        
+        // Check if the current path starts with the subItem path
+        // This helps with nested routes
+        if (currentPath.startsWith(subItem.path)) return true;
+        
+        return false;
+      });
+    }
+    return false;
   };
 
-  const handleCloseDialog = () => {
-    setOpenDialog(false); // Close the dialog
+  // Drawer toggle
+  const handleDrawerToggle = () => {
+    setDrawerOpen(!drawerOpen);
   };
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setUpdatedProfile((prev) => ({ ...prev, [name]: value }));  // Update the profile data as user types
+  // Handle submenu toggle in Drawer
+  const handleSubMenuToggle = (menuKey) => {
+    setOpenSubMenus((prev) => ({
+      ...prev,
+      [menuKey]: !prev[menuKey],
+    }));
   };
 
-  const handleSaveChanges = () => {
-    // Save the updated profile data to localStorage (or you can call an API here)
-    localStorage.setItem("profiledata", JSON.stringify(updatedProfile));
-    setOpenDialog(false); // Close the dialog after saving
-  };
+  // Render menu items for Drawer
+  const renderDrawerMenu = () => (
+    <Box
+      sx={{ width: drawerWidth }}
+      role="presentation"
+    >
+      <List>
+        {filteredMenuConfig.map((menu) => (
+          <React.Fragment key={menu.key}>
+            {menu.subItems && menu.subItems.length > 0 ? (
+              <>
+                <ListItem disablePadding>
+                  {/* Expand/Collapse Submenu without closing the Drawer */}
+                  <ListItemButton onClick={() => handleSubMenuToggle(menu.key)}>
+                    <ListItemText
+                      primary={menu.label}
+                      primaryTypographyProps={{
+                        fontWeight: isMenuActive(menu) ? 'bold' : 'normal',
+                        color: isMenuActive(menu) ? 'black' : 'inherit',
+                      }}
+                    />
+                    {openSubMenus[menu.key] ? <ExpandLess /> : <ExpandMore />}
+                  </ListItemButton>
+                </ListItem>
+                <Collapse in={openSubMenus[menu.key]} timeout="auto" unmountOnExit>
+                  <List component="div" disablePadding>
+                    {menu.subItems
+                      .filter((subItem) => subItem.allowedRoles.includes(userRole))
+                      .map((subItem) => (
+                        <ListItem key={subItem.key} disablePadding>
+                          <ListItemButton
+                            component={NavLink}
+                            to={subItem.path}
+                            onClick={handleDrawerToggle} // Close Drawer when navigating to a sub-item
+                            sx={{
+                              pl: 4,
+                              backgroundColor: currentPath === subItem.path ? 'rgba(0,0,0,0.1)' : 'inherit',
+                              '&:hover': {
+                                backgroundColor: 'rgba(0,0,0,0.2)',
+                              },
+                            }}
+                          >
+                            <ListItemText
+                              primary={subItem.label}
+                              primaryTypographyProps={{
+                                color: currentPath === subItem.path ? 'black' : 'inherit',
+                              }}
+                            />
+                          </ListItemButton>
+                        </ListItem>
+                      ))}
+                  </List>
+                </Collapse>
+              </>
+            ) : (
+              <ListItem disablePadding>
+                {/* Close Drawer when navigating to a main menu item */}
+                <ListItemButton
+                  component={NavLink}
+                  to={menu.path}
+                  onClick={handleDrawerToggle}
+                  sx={{
+                    backgroundColor: currentPath === menu.path ? 'rgba(0,0,0,0.1)' : 'inherit',
+                    '&:hover': {
+                      backgroundColor: 'rgba(0,0,0,0.2)',
+                    },
+                  }}
+                >
+                  <ListItemText
+                    primary={menu.label}
+                    primaryTypographyProps={{
+                      fontWeight: currentPath === menu.path ? 'bold' : 'normal',
+                      color: currentPath === menu.path ? 'black' : 'inherit',
+                    }}
+                  />
+                </ListItemButton>
+              </ListItem>
+            )}
+          </React.Fragment>
+        ))}
+      </List>
+    </Box>
+  );
+  
 
   return (
     <>
       <CssBaseline />
-      {/* AppBar */}
-      <AppBar position="fixed">
+      <AppBar
+        position="fixed"
+        sx={{
+          backgroundColor: 'black',
+          color: 'white',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.08)',
+        }}
+      >
         <Container maxWidth="xl">
-          <Toolbar disableGutters>
-            {/* Sidebar Toggle Button */}
-            <IconButton
-              color="inherit"
-              onClick={handleToggleSidebar}
-              edge="start"
-              sx={{ mr: 2 }}
-            >
-              <MenuIcon />
-            </IconButton>
+          <Toolbar disableGutters sx={{ justifyContent: 'space-between' }}>
+            {/* Mobile: Hamburger Menu and Logo */}
+            <Box sx={{ display: { xs: 'flex', md: 'none' }, alignItems: 'center' }}>
+              <IconButton
+                color="inherit"
+                aria-label="open drawer"
+                edge="start"
+                onClick={handleDrawerToggle}
+                sx={{ mr: 2 }}
+              >
+                <MenuIcon />
+              </IconButton>
+              {/* Logo */}
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <img src={logo} alt="Platform X Logo" style={{ height: '40px' }} />
+              </Box>
+            </Box>
 
-            {/* App Title */}
-            <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-              DemoDigital
-            </Typography>
+            {/* Desktop: Logo */}
+            <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center' }}>
+              <img src={logo} alt="Platform X Logo" style={{ height: '40px' }} />
+            </Box>
 
-            {/* Navigation Tabs */}
-            <Tabs
-              value={currentTabValue}
-              indicatorColor="secondary"
-              textColor="inherit"
-              aria-label="nav tabs"
-              sx={{ flexGrow: 1, marginLeft: 2 }}
-            >
-              {filteredMenuConfig.map((page) => (
-                <Tab
-                  key={page.key}
-                  label={page.label}
-                  component={NavLink}
-                  to={page.path}
-                  value={page.path} // Set value to the route path
-                  // Ensure NavLink applies active styling
-                  sx={{ textTransform: "none" }}
-                  // Use exact to ensure exact path matching for active Tab
-                  end={page.path === "/"}
-                />
+            {/* Desktop: Navigation Menu */}
+            <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 1, alignItems: 'center' }}>
+              {filteredMenuConfig.map((menu) => (
+                <Box key={menu.key} sx={{ display: 'flex', alignItems: 'center' }}>
+                  {menu.subItems && menu.subItems.length > 0 ? (
+                    <ButtonGroup variant="contained" disableElevation>
+                      {/* Parent Button: Navigates to first sub-item */}
+                      <Button
+                        component={NavLink}
+                        to={menu.subItems[0].path}
+                        aria-controls={Boolean(menuAnchors[menu.key]) ? 'menu-appbar' : undefined}
+                        aria-haspopup="true"
+                        aria-expanded={Boolean(menuAnchors[menu.key]) ? 'true' : undefined}
+                        onClick={(e) => handleOpenMenu(e, menu.key)}
+                        sx={{
+                          color: isMenuActive(menu) ? 'black' : 'inherit',
+                          backgroundColor: isMenuActive(menu) ? 'white' : 'transparent',
+                          textTransform: 'none',
+                          fontSize: '15px',
+                          '&:hover': {
+                            backgroundColor: 'black',
+                            color: 'white',
+                          },
+                          fontWeight: isMenuActive(menu) ? 'bold' : 'normal',
+                          borderTopLeftRadius: 4,
+                          borderBottomLeftRadius: 4,
+                          borderTopRightRadius: 4,
+                          borderBottomRightRadius: 4,
+                          minWidth: '120px',
+                        }}
+                      >
+                        {menu.label} <KeyboardArrowDownIcon />
+                      </Button>
+
+                      {/* Dropdown Arrow Button */}
+                      {/* <Button
+                        size="small"
+                        aria-controls={Boolean(menuAnchors[menu.key]) ? 'menu-appbar' : undefined}
+                        aria-haspopup="true"
+                        aria-expanded={Boolean(menuAnchors[menu.key]) ? 'true' : undefined}
+                        onClick={(e) => handleOpenMenu(e, menu.key)}
+                        sx={{
+                          color: isMenuActive(menu) ? 'black' : 'inherit',
+                          backgroundColor: isMenuActive(menu) ? 'white' : 'transparent',
+                          '&:hover': {
+                            backgroundColor: 'black',
+                            color: 'white',
+                          },
+                          borderTopLeftRadius: 0,
+                          borderBottomLeftRadius: 0,
+                          borderTopRightRadius: 4,
+                          borderBottomRightRadius: 4,
+                          minWidth: '40px',
+                        }}
+                      >
+                        <KeyboardArrowDownIcon />
+                      </Button> */}
+                    </ButtonGroup>
+                  ) 
+                  : 
+                  (
+                    <Button
+                      component={NavLink}
+                      to={menu.path}
+                      sx={{
+                        color: isMenuActive(menu) ? 'black' : 'inherit',
+                        backgroundColor: isMenuActive(menu) ? 'white' : 'transparent',
+                        textTransform: 'none',
+                        fontSize: '15px',
+                        '&:hover': {
+                          backgroundColor: 'black',
+                          color: 'white',
+                        },
+                        fontWeight: isMenuActive(menu) ? 'bold' : 'normal',
+                      }}
+                    >
+                      {menu.label}
+                    </Button>
+                  )}
+
+                  {/* Sub-Menu Dropdown */}
+                  {menu.subItems && menu.subItems.length > 0 && (
+                    <StyledMenu
+                      anchorEl={menuAnchors[menu.key]}
+                      open={Boolean(menuAnchors[menu.key])}
+                      onClose={() => handleCloseMenu(menu.key)}
+                      elevation={0}
+                      anchorOrigin={{
+                        vertical: 'bottom',
+                        horizontal: 'center',
+                      }}
+                      transformOrigin={{
+                        vertical: 'top',
+                        horizontal: 'center',
+                      }}
+                    >
+                      {menu.subItems
+                        .filter((subItem) => subItem.allowedRoles.includes(userRole))
+                        .map((subItem) => (
+                          <MenuItem
+                            key={subItem.key}
+                            component={NavLink}
+                            to={subItem.path}
+                            onClick={() => handleCloseMenu(menu.key)}
+                            className={currentPath === subItem.path ? 'active' : ''}
+                          >
+                            {subItem.label}
+                          </MenuItem>
+                        ))}
+                    </StyledMenu>
+                  )}
+                </Box>
               ))}
-            </Tabs>
+            </Box>
 
-            {/* Profile and User Menu */}
-            <Box sx={{ flexGrow: 0 }}>
-              <Tooltip title="Open profile">
+            {/* Profile Menu */}
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <Tooltip title="Settings">
                 <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                  <Avatar alt={profiledata.displayName} src={imageUrl} />
+                  <Avatar
+                    alt={profiledata.displayName}
+                    src={imageUrl}
+                    sx={{ width: 40, height: 40 }}
+                  />
                 </IconButton>
               </Tooltip>
-              <Menu
-                id="menu-appbar"
+              <StyledMenu
                 anchorEl={anchorElUser}
-                anchorOrigin={{
-                  vertical: "top",
-                  horizontal: "right",
-                }}
-                keepMounted
-                transformOrigin={{
-                  vertical: "top",
-                  horizontal: "right",
-                }}
                 open={Boolean(anchorElUser)}
                 onClose={handleCloseUserMenu}
+                anchorOrigin={{
+                  vertical: 'bottom',
+                  horizontal: 'right',
+                }}
+                transformOrigin={{
+                  vertical: 'top',
+                  horizontal: 'right',
+                }}
               >
                 <MenuItem>
-                  <Typography>{profiledata.displayName}</Typography>
+                  <Typography variant="subtitle2">{profiledata.displayName}</Typography>
                 </MenuItem>
                 <MenuItem>
-                  <Typography>{profiledata.userPrincipalName}</Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {profiledata.userPrincipalName}
+                  </Typography>
                 </MenuItem>
-                {/* Display the user role */}
                 {userRole && (
                   <>
                     <Divider />
                     <MenuItem>
-                      <Typography>Role: {getRoleDisplayName(userRole)}</Typography>
+                      <Typography variant="body2">
+                        Role: {getRoleDisplayName(userRole)}
+                      </Typography>
                     </MenuItem>
                   </>
                 )}
@@ -265,125 +497,35 @@ export default function ResponsiveAppBar() {
                   </a>
                 </MenuItem>
                 <MenuItem onClick={handleLogout}>
-                  <Typography textAlign="center">Logout</Typography>
+                  <Typography>Logout</Typography>
                 </MenuItem>
-                <MenuItem onClick={handleOpenDialog} style={{ color: "blue", cursor: "pointer" }}>
-                  <Typography textAlign="center" style={{ fontWeight: "bold" }}>Edit Profile</Typography>
-                </MenuItem>
-                {/* Dialog for editing profile */}
-                <Dialog open={openDialog} onClose={handleCloseDialog}>
-                  <DialogTitle>Edit Profile</DialogTitle>
-                  <DialogContent>
-                    <TextField
-                      autoFocus
-                      margin="dense"
-                      label="Display Name"
-                      type="text"
-                      fullWidth
-                      variant="outlined"
-                      name="displayName"
-                      value={updatedProfile.displayName}
-                      onChange={handleChange}
-                    />
-                    <TextField
-                      margin="dense"
-                      label="User Principal Name"
-                      type="email"
-                      fullWidth
-                      variant="outlined"
-                      name="userPrincipalName"
-                      value={updatedProfile.userPrincipalName}
-                      onChange={handleChange}
-                    />
-                    <TextField
-                      margin="dense"
-                      label="Role"
-                      type="text"
-                      fullWidth
-                      variant="outlined"
-                      name="role"
-                      value={updatedProfile.role}
-                      onChange={handleChange}
-                    />
-                  </DialogContent>
-                  <DialogActions>
-                    <Button onClick={handleCloseDialog} color="primary">
-                      Cancel
-                    </Button>
-                    <Button onClick={handleSaveChanges} color="primary">
-                      Save
-                    </Button>
-                  </DialogActions>
-                </Dialog>
-              </Menu>
+              </StyledMenu>
             </Box>
           </Toolbar>
         </Container>
+
+        {/* Drawer for Mobile */}
+        <Drawer
+          anchor="left"
+          open={drawerOpen}
+          onClose={handleDrawerToggle}
+          ModalProps={{
+            keepMounted: true, // Better open performance on mobile.
+          }}
+          sx={{
+            display: { xs: 'block', md: 'none' },
+            '& .MuiDrawer-paper': {
+              boxSizing: 'border-box',
+              width: drawerWidth,
+            },
+          }}
+        >
+          {renderDrawerMenu()}
+        </Drawer>
       </AppBar>
 
-      {/* Sidebar Drawer */}
-      <Drawer
-        sx={{
-          width: drawerWidth,
-          flexShrink: 0,
-          "& .MuiDrawer-paper": {
-            width: drawerWidth,
-            top: "64px", // Position the drawer below the AppBar
-          },
-        }}
-        variant="persistent"
-        anchor="left"
-        open={sidebarOpen}
-      >
-        <Divider />
-        <List>
-          {/* Logo at the top */}
-          <div className="logo-container">
-            <img src={logo} alt="Platform X Logo" className="navbar-logo" />
-          </div>
-          {/* Sidebar SubItems for the Selected Main Menu */}
-          {currentMainMenu && currentMainMenu.subItems && currentMainMenu.subItems.length > 0 ? (
-            currentMainMenu.subItems
-              .filter((subItem) => subItem.allowedRoles.includes(userRole))
-              .map((subItem) => (
-                <ListItem
-                  button
-                  key={subItem.key}
-                  component={NavLink}
-                  to={subItem.path}
-                  // Apply active styling
-                  style={({ isActive }) => ({
-                    backgroundColor: isActive ? theme.palette.action.selected : undefined,
-                  })}
-                  end={false}
-                  onClick={handleToggleSidebar}
-                >
-                  <ListItemText primary={subItem.label} />
-                </ListItem>
-              ))
-          ) : (
-            // If the selected main menu has no subItems, display it directly
-            currentMainMenu && (
-              <ListItem
-                button
-                component={NavLink}
-                to={currentMainMenu.path}
-                // Apply active styling
-                style={({ isActive }) => ({
-                  backgroundColor: isActive ? theme.palette.action.selected : undefined,
-                })}
-                end={currentMainMenu.path === "/"}
-                onClick={handleToggleSidebar}
-              >
-                <ListItemText primary={currentMainMenu.label} />
-              </ListItem>
-            )
-          )}
-        </List>
-      </Drawer>
-
       {/* Main Content Area */}
-      <MainContent open={sidebarOpen}>
+      <MainContent>
         {loader ? <LinearProgress /> : <Outlet />}
       </MainContent>
     </>

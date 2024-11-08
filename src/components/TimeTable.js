@@ -1,6 +1,6 @@
 // src/pages/EmployeeTimesheetView.jsx
 
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import { 
   Table, 
   Button, 
@@ -52,6 +52,9 @@ const EmployeeTimesheetView = () => {
   // States for Modal
   const [modalOpen, setModalOpen] = useState(false);
   const [commentToView, setCommentToView] = useState(null);
+
+  // Ref to track which toasts have been shown
+  const toastShownRef = useRef({}); // { "projectId-dayIndex": { allocationExceeded: bool, over24: bool } }
 
   // Helper function to parse date strings as local dates
   const parseDate = (dateStr) => {
@@ -181,6 +184,9 @@ const EmployeeTimesheetView = () => {
       setProjects(initializedProjects);
 
       setError(null); // Clear any previous errors
+
+      // Reset toastShown when new timesheet data is fetched
+      toastShownRef.current = {};
     } catch (err) {
       console.error('Error fetching timesheet data:', err);
       if (err.response) {
@@ -221,7 +227,7 @@ const EmployeeTimesheetView = () => {
         manager: project.TimesheetApprover,
         allocationID: project.AllocationID,
         timesheetApproverID: project.TimesheetApproverID,
-        hours: dates.map(dateStr => project.DailyDetails[dateStr]?.TimesheetHours || 0),
+        hours: dates.map(dateStr => project.DailyDetails[dateStr]?.TimesheetHours?.toString() || ''), // Store as strings
         approvalStatus: dates.map(dateStr => approvalStatusMap[project.DailyDetails[dateStr]?.ApprovalStatus] || 'Not Submitted'),
         comments: dates.map(dateStr => project.DailyDetails[dateStr]?.TimesheetApproverComments || ''),
         status: dates.map(dateStr => {
@@ -232,7 +238,7 @@ const EmployeeTimesheetView = () => {
           }
           return 'normal';
         }),
-        allocationHours: dates.map(dateStr => project.DailyDetails[dateStr]?.AllocationHours || 8),
+        allocationHours: dates.map(dateStr => project.DailyDetails[dateStr]?.AllocationHours?.toString() || '8'), // Store as strings
         isAvailable: dates.map(dateStr => project.DailyDetails.hasOwnProperty(dateStr))
       };
     });
@@ -296,24 +302,90 @@ const EmployeeTimesheetView = () => {
     setSelectedDay(newDate);
   };
 
+  // Handle input focus to clear previous value
+  const handleFocus = (projectId, dayIndex) => {
+    const key = `${projectId}-${dayIndex}`;
+    
+    // Only clear if the current value is not empty
+    const currentValue = projects.find(p => p.id === projectId)?.hours[dayIndex];
+    if (currentValue !== '') {
+      setProjects(prevProjects =>
+        prevProjects.map(project =>
+          project.id === projectId
+            ? {
+                ...project,
+                hours: project.hours.map((h, i) => (i === dayIndex ? '' : h)),
+              }
+            : project
+        )
+      );
+    }
+  };
+
   // Handle input change for hours
   const handleHourChange = (projectId, dayIndex, value) => {
-    let hours = parseFloat(value);
+    let hoursStr = value;
+    let hours = parseFloat(hoursStr);
     if (isNaN(hours)) hours = 0;
-    const maxHours = projects.find(p => p.id === projectId)?.allocationHours[dayIndex] || 8.0;
-    if (hours > maxHours) hours = maxHours; // Enforce maximum based on AllocationHours
-    if (hours < 0.1) hours = 0.1; // Enforce minimum of 0.1 hours
+
+    const project = projects.find(p => p.id === projectId);
+    const allocationHours = parseFloat(project?.allocationHours[dayIndex]) || 8.0;
+    const day = days[dayIndex]?.dayName;
+
+    // Define the key for the current project and day
+    const key = `${projectId}-${dayIndex}`;
+
+    // Initialize toastShown entry for this project and day if it doesn't exist
+    if (!toastShownRef.current[key]) {
+      toastShownRef.current[key] = { allocationExceeded: false, over24: false };
+    }
+
+    // Handle over 24 hours
+    if (hours > 24) {
+      if (!toastShownRef.current[key].over24) {
+        toast.error(`Cannot set more than 24 hours for project "${project.name}" on ${day}.`);
+        toastShownRef.current[key].over24 = true;
+      }
+      hours = 24; // Cap at 24 hours
+      hoursStr = '24';
+    } else {
+      // Reset over24 flag if hours are reduced below 24
+      if (toastShownRef.current[key].over24) {
+        toastShownRef.current[key].over24 = false;
+      }
+    }
+
+    // Handle allocationHours exceeded
+    if (hours > allocationHours) {
+      if (!toastShownRef.current[key].allocationExceeded) {
+        toast.warn(`You have exceeded the allocated ${allocationHours} hours for project "${project.name}" on ${day}.`);
+        toastShownRef.current[key].allocationExceeded = true;
+      }
+    } else {
+      // Reset allocationExceeded flag if hours are reduced below allocationHours
+      if (toastShownRef.current[key].allocationExceeded) {
+        toastShownRef.current[key].allocationExceeded = false;
+      }
+    }
+
+    // Enforce minimum of 0 hours
+    if (hours < 0) {
+      hours = 0;
+      hoursStr = '0';
+    }
+
     setProjects(prevProjects =>
       prevProjects.map(project =>
         project.id === projectId
           ? {
               ...project,
-              hours: project.hours.map((h, i) => (i === dayIndex ? hours : h)),
+              hours: project.hours.map((h, i) => (i === dayIndex ? hoursStr : h)),
             }
           : project
       )
     );
   };
+
 
   // Handle status change for a specific project and day
   const handleStatusChange = (projectId, dayIndex, value) => {
@@ -330,12 +402,12 @@ const EmployeeTimesheetView = () => {
   };
 
   // Calculate total hours per project
-  const calculateTotal = (hours) => hours.reduce((sum, hour) => sum + hour, 0);
+  const calculateTotal = (hours) => hours.reduce((sum, hour) => sum + (parseFloat(hour) || 0), 0);
 
   // Calculate daily total hours
   const calculateDailyTotal = (dayIndex) => 
     projects.reduce((sum, project) => 
-      project.status[dayIndex] === 'normal' ? sum + project.hours[dayIndex] : sum, 0
+      project.status[dayIndex] === 'normal' ? sum + (parseFloat(project.hours[dayIndex]) || 0) : sum, 0
     , 0);
 
 
@@ -363,11 +435,11 @@ const EmployeeTimesheetView = () => {
 
     switch (approvalStatus) {
       case 'Submitted':
-        return '#fff3cd'; // Yellow
+        return '#f4b816'; // Yellow
       case 'Approved':
-        return '#d4edda'; // Green
+        return '#55a245'; // Green
       case 'Rejected':
-        return '#f8d7da'; // Red
+        return '#ff0800'; // Red
       default:
         return 'transparent';
     }
@@ -381,51 +453,8 @@ const EmployeeTimesheetView = () => {
       { key: 'leave', text: 'On Leave', value: 'leave' },
     ];
   };
-  // const handleSubmit = async () => {
-  //   if (viewMode === 'week') {
-  //     // Prepare payload for submission (if needed)
-  //     // Example: Send the updated timesheet data to the backend
-
-  //     // For demonstration, we'll just log the data
-  //     console.log('Week-wise timesheet submitted', projects);
-
-  //     // Update approvalStatus to 'Submitted' for all projects and days where current status is 'Not Submitted' or 'Rejected'
-  //     setProjects(prevProjects =>
-  //       prevProjects.map(project => ({
-  //         ...project,
-  //         approvalStatus: project.approvalStatus.map((status, i) => 
-  //           status === 'Not Submitted' || status === 'Rejected' ? 'Submitted' : status
-  //         ),
-  //       }))
-  //     );
-
-  //     toast.success('Week-wise timesheet submitted successfully!');
-  //   } else if (viewMode === 'day') {
-  //     // Prepare payload for day-wise submission (if needed)
-  //     // Example: Send the updated timesheet data for the selected day to the backend
-
-  //     // For demonstration, we'll just log the data
-  //     console.log(`Day-wise timesheet submitted for ${formatDate(selectedDay)}`, projects);
-      
-  //     // Update approvalStatus to 'Submitted' for selected day across all projects where current status is 'Not Submitted' or 'Rejected'
-  //     const dayIndex = getCurrentDayIndex(); // This will be 0 in day view
-  //     setProjects(prevProjects =>
-  //       prevProjects.map(project => ({
-  //         ...project,
-  //         approvalStatus: project.approvalStatus.map((status, i) => 
-  //           i === dayIndex && (status === 'Not Submitted' || status === 'Rejected') ? 'Submitted' : status
-  //         ),
-  //       }))
-  //     );
-
-  //     toast.success(`Timesheet for ${formatDate(selectedDay)} submitted successfully!`);
-  //   }
-
-  //   // Optionally, you can re-fetch the timesheet data to reflect the updated approval statuses
-  //   await fetchTimesheetData(employeeData.EmployeeId, getSelectedDates());
-  // };
-  // Inside EmployeeTimesheetView.jsx
-
+  
+  // Modified handleSubmit Function
   const handleSubmit = async () => {
     if (!employeeData) {
       toast.error('Employee data is missing.');
@@ -438,33 +467,42 @@ const EmployeeTimesheetView = () => {
     if (viewMode === 'week') {
       projects.forEach(project => {
         project.hours.forEach((hour, index) => {
-          // Only submit entries that are available and have been modified
-          if (project.isAvailable[index]) {
-            entries.push({
-              employeeId: employeeId,
-              projectId: project.id,
-              date: days[index].dateStr,
-              hours: hour,
-              status: project.status[index] === 'holiday' ? 'Holiday' :
-                      project.status[index] === 'leave' ? 'Leave' : 'Normal',
-              timesheetApproverComments: project.comments[index] || ''
-            });
+          const approvalStatus = project.approvalStatus[index];
+          // Only include entries with 'Not Submitted' or 'Rejected' status
+          if (approvalStatus === 'Not Submitted' || approvalStatus === 'Rejected') {
+            // Only submit entries that are available
+            if (project.isAvailable[index]) {
+              entries.push({
+                employeeId: employeeId,
+                projectId: project.id,
+                date: days[index].dateStr,
+                hours: parseFloat(hour) || 0,
+                status: project.status[index] === 'holiday' ? 'Holiday' :
+                        project.status[index] === 'leave' ? 'Leave' : 'Normal',
+                timesheetApproverComments: project.comments[index] || ''
+              });
+            }
           }
         });
       });
     } else if (viewMode === 'day') {
       const dayIndex = getCurrentDayIndex();
       projects.forEach(project => {
-        if (project.isAvailable[dayIndex]) {
-          entries.push({
-            employeeId: employeeId,
-            projectId: project.id,
-            date: formatDateStr(selectedDay),
-            hours: project.hours[dayIndex],
-            status: project.status[dayIndex] === 'holiday' ? 'Holiday' :
-                    project.status[dayIndex] === 'leave' ? 'Leave' : 'Normal',
-            timesheetApproverComments: project.comments[dayIndex] || ''
-          });
+        const approvalStatus = project.approvalStatus[dayIndex];
+        // Only include entries with 'Not Submitted' or 'Rejected' status
+        if (approvalStatus === 'Not Submitted' || approvalStatus === 'Rejected') {
+          // Only submit entries that are available
+          if (project.isAvailable[dayIndex]) {
+            entries.push({
+              employeeId: employeeId,
+              projectId: project.id,
+              date: formatDateStr(selectedDay),
+              hours: parseFloat(project.hours[dayIndex]) || 0,
+              status: project.status[dayIndex] === 'holiday' ? 'Holiday' :
+                      project.status[dayIndex] === 'leave' ? 'Leave' : 'Normal',
+              timesheetApproverComments: project.comments[dayIndex] || ''
+            });
+          }
         }
       });
     }
@@ -497,11 +535,25 @@ const EmployeeTimesheetView = () => {
         setProjects(prevProjects =>
           prevProjects.map(project => ({
             ...project,
-            approvalStatus: project.approvalStatus.map((status, i) => 
-              viewMode === 'week' 
-                ? (status === 'Not Submitted' || status === 'Rejected') ? 'Submitted' : status
-                : (i === getCurrentDayIndex() && (status === 'Not Submitted' || status === 'Rejected')) ? 'Submitted' : status
-            ),
+            approvalStatus: project.approvalStatus.map((status, i) => {
+              if (viewMode === 'week') {
+                // For week view, iterate through all days
+                const currentStatus = status;
+                if (currentStatus === 'Not Submitted' || currentStatus === 'Rejected') {
+                  return 'Submitted';
+                }
+                return currentStatus; // Leave as is for 'Submitted' or 'Approved'
+              } else {
+                // For day view, only update the selected day
+                const currentStatus = project.approvalStatus[i];
+                if (i === getCurrentDayIndex()) {
+                  if (currentStatus === 'Not Submitted' || currentStatus === 'Rejected') {
+                    return 'Submitted';
+                  }
+                }
+                return currentStatus;
+              }
+            }),
           }))
         );
 
@@ -522,10 +574,12 @@ const EmployeeTimesheetView = () => {
 
   // Handle discard action
   const handleDiscard = () => {
-    // Re-fetch the timesheet data to reset any changes
-    fetchTimesheetData(employeeData.EmployeeId, getSelectedDates());
-    console.log('Changes discarded');
-    toast.info('Changes have been discarded.');
+    if (employeeData) {
+      // Re-fetch the timesheet data to reset any changes
+      fetchTimesheetData(employeeData.EmployeeId, getSelectedDates());
+      console.log('Changes discarded');
+      toast.info('Changes have been discarded.');
+    }
   };
 
   // Handler to view comments
@@ -625,11 +679,11 @@ const EmployeeTimesheetView = () => {
                   </div>
 
                   <div className="info-item">
-                    <Icon name="phone" size="large" />
+                    <Icon name="user" size="large" />
                     <div>
-                      <p>RMSStatus</p>
-                      {/* Employee RMSStatus */}
-                      <p>{employeeData.EmployeeKekaStatus}</p>
+                      <p>HCM Status</p>
+                      {/* Employee HCM Status */}
+                      <p>{employeeData.EmployeeHCMStatus}</p>
                     </div>
                   </div>
 
@@ -802,15 +856,17 @@ const EmployeeTimesheetView = () => {
                             const cellApprovalStatus = project.approvalStatus[index];
                             const cellStatus = project.status[index];
                             
-                            // Define whether inputs should be disabled based on Approval Status
+                            // Updated isDisabledInput to include status checks and 24-hour restriction
                             const isDisabledInput = !project.isAvailable[index] || 
-                                                    (cellApprovalStatus === 'Submitted' || cellApprovalStatus === 'Approved');
+                                                    (cellApprovalStatus === 'Submitted' || cellApprovalStatus === 'Approved') ||
+                                                    (cellStatus === 'holiday' || cellStatus === 'leave');
                             
                             const isDisabledDropdown = !project.isAvailable[index] || 
                                                        (cellApprovalStatus === 'Submitted' || cellApprovalStatus === 'Approved');
 
                             const backgroundColor = getCellBackgroundColor(project, index);
-                            const maxHours = project.allocationHours[index];
+                            // Removed allocationHours as max is now 24
+                            // const maxHours = project.allocationHours[index];
 
                             return (
                               <Table.Cell 
@@ -827,13 +883,14 @@ const EmployeeTimesheetView = () => {
                                   <Input
                                     type='number'
                                     min='0'
-                                    max={maxHours} // Set maximum based on AllocationHours
-                                    step='0.1' // Integer steps
+                                    max='24' // Restricting to 24 hours
+                                    step='1' // Whole hours
                                     value={project.hours[index]}
                                     onChange={(e) => handleHourChange(project.id, index, e.target.value)}
-                                    style={{ width: '80px', fontSize: '1em', marginRight: '5px' }} // Adjusted width and spacing
-                                    size='small' // Adjusted input size
-                                    disabled={isDisabledInput} // Disable based on availability and approvalStatus
+                                    onFocus={() => handleFocus(project.id, index)} // Clear on focus
+                                    style={{ width: '80px', fontSize: '1em', marginRight: '5px' }}
+                                    size='small'
+                                    disabled={isDisabledInput} // Disable based on availability, approvalStatus, and status
                                   />
                                   {project.isAvailable[index] && (
                                     <Popup
@@ -850,7 +907,7 @@ const EmployeeTimesheetView = () => {
                                             onChange={(e, { value }) => handleStatusChange(project.id, index, value)}
                                             placeholder='Select Status'
                                             fluid
-                                            disabled={isDisabledDropdown} // Disable based on approvalStatus
+                                            disabled={isDisabledDropdown} // Dropdown remains enabled unless timesheet is submitted or approved
                                           />
                                         </div>
                                       }
@@ -865,15 +922,17 @@ const EmployeeTimesheetView = () => {
                             const cellApprovalStatus = project.approvalStatus[dayIndex];
                             const cellStatus = project.status[dayIndex];
                             
-                            // Define whether inputs should be disabled based on Approval Status
+                            // Updated isDisabledInput to include status checks and 24-hour restriction
                             const isDisabledInput = !project.isAvailable[dayIndex] || 
-                                                    (cellApprovalStatus === 'Submitted' || cellApprovalStatus === 'Approved');
+                                                    (cellApprovalStatus === 'Submitted' || cellApprovalStatus === 'Approved') ||
+                                                    (cellStatus === 'holiday' || cellStatus === 'leave');
                             
                             const isDisabledDropdown = !project.isAvailable[dayIndex] || 
                                                        (cellApprovalStatus === 'Submitted' || cellApprovalStatus === 'Approved');
 
                             const backgroundColor = getCellBackgroundColor(project, dayIndex);
-                            const maxHours = project.allocationHours[dayIndex] || 8;
+                            // Removed allocationHours as max is now 24
+                            // const maxHours = project.allocationHours[dayIndex] || 8;
 
                             return (
                               <Table.Cell 
@@ -890,13 +949,14 @@ const EmployeeTimesheetView = () => {
                                   <Input
                                     type='number'
                                     min='0'
-                                    max={maxHours} // Set maximum based on AllocationHours
-                                    step='0.1' // Integer steps
+                                    max='24' // Restricting to 24 hours
+                                    step='1' // Whole hours
                                     value={project.hours[dayIndex]}
                                     onChange={(e) => handleHourChange(project.id, dayIndex, e.target.value)}
+                                    onFocus={() => handleFocus(project.id, dayIndex)} // Clear on focus
                                     style={{ width: '80px', fontSize: '1em', marginRight: '5px', backgroundColor: '#f9f9f9' }}
                                     size='small' // Adjusted input size
-                                    disabled={isDisabledInput} // Disable based on availability and approvalStatus
+                                    disabled={isDisabledInput} // Disable based on availability, approvalStatus, and status
                                   />
                                   {project.isAvailable[dayIndex] && (
                                     <Popup
@@ -913,7 +973,7 @@ const EmployeeTimesheetView = () => {
                                             onChange={(e, { value }) => handleStatusChange(project.id, dayIndex, value)}
                                             placeholder='Select Status'
                                             fluid
-                                            disabled={isDisabledDropdown} // Disable based on approvalStatus
+                                            disabled={isDisabledDropdown} // Dropdown remains enabled unless timesheet is submitted or approved
                                           />
                                         </div>
                                       }
@@ -926,7 +986,7 @@ const EmployeeTimesheetView = () => {
                           <Table.Cell textAlign='center' style={{ fontSize: '1.1em', padding: '1em' }}>
                             {viewMode === 'week' 
                               ? (calculateTotal(project.hours) || 0).toFixed(0) // Remove decimal and handle undefined
-                              : (project.hours[getCurrentDayIndex()] !== undefined ? project.hours[getCurrentDayIndex()].toFixed(0) : '0')}
+                              : (parseFloat(project.hours[getCurrentDayIndex()]) || 0).toFixed(0)}
                           </Table.Cell>
                         </Table.Row>
 
@@ -992,8 +1052,8 @@ const EmployeeTimesheetView = () => {
                           }}
                         >
                           <strong>{projects.reduce((sum, project) => {
-                            const value = project.hours[getCurrentDayIndex()];
-                            return sum + (value !== undefined ? value : 0);
+                            const value = parseFloat(project.hours[getCurrentDayIndex()]) || 0;
+                            return sum + value;
                           }, 0).toFixed(1)}</strong> {/* One decimal */}
                         </Table.Cell>
                       )}
@@ -1002,8 +1062,8 @@ const EmployeeTimesheetView = () => {
                           {viewMode === 'week' 
                             ? (projects.reduce((sum, project) => sum + calculateTotal(project.hours), 0) || 0).toFixed(1) 
                             : (projects.reduce((sum, project) => {
-                                const value = project.hours[getCurrentDayIndex()];
-                                return sum + (value !== undefined ? value : 0);
+                                const value = parseFloat(project.hours[getCurrentDayIndex()]) || 0;
+                                return sum + value;
                               }, 0) || 0).toFixed(1)}
                         </strong>
                       </Table.Cell>
